@@ -71,3 +71,27 @@ Then in Tessera: **Plugins → Mit Link hinzufügen →** `https://github.com/Ha
 
 Tile options: **Netz umkehren** falls der Zähler invertiert zählt · **Batterie umkehren** falls Laden positiv zählt ·
 **Tag anzeigen**.
+
+## Bonus: Your home as a picture tile
+
+The screen can show pictures straight from Home Assistant — no plugin needed. To put a picture of your own home (a
+3D render, a photo) on a tile or as the screensaver's background:
+
+1. Copy the picture into Home Assistant's config folder, e.g. `/config/images/home.png` (via the Samba share, or
+   drag & drop in the Studio Code Server's explorer — uploads land on disk at once).
+2. Add a local-file camera to `configuration.yaml`:
+
+   ```yaml
+   camera:
+     - platform: local_file
+       name: Home 3D
+       file_path: /config/images/home.png
+   ```
+
+   If a `camera:` block already exists, only add the indented lines under it.
+3. **Restart Home Assistant.** YAML-configured cameras load only at startup — a YAML reload from Developer tools is
+   not enough.
+4. In Tessera's layout, add a tile for `camera.home_3d`. At **full page** it fills the whole glass; it also works as
+   the screensaver's **Camera** step (Screen settings → Screensaver), so the picture fills the screen in standby.
+
+The picture stays completely local: it is read from your Home Assistant over your network and never leaves it.
