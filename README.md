@@ -4,6 +4,12 @@ Electricity at home with solar **and a battery**: what the panels make, what the
 or takes (with its state of charge), and what comes from the grid or goes back to it — on one tile, in the spirit of
 Home Assistant's energy dashboard and the Power-Flux-Card look.
 
+| The tile (2 × 3) | The card on a tap |
+|---|---|
+| ![The Flux tile with solar, battery, house and grid](docs/tile.png) | ![The Flux card with the flow diagram and the sensor rows](docs/card.png) |
+
+*Images with demonstration data — no real household values.*
+
 **The tile** shows the sun, the battery, the house and the grid side by side: what the panels make now, what the
 battery gives or takes, what the house uses, and what comes from the grid or goes back to it. Arrows show where the
 power flows; a circle takes its colour while power flows there (amber for the sun, green for a charging battery, amber

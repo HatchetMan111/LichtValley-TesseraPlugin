@@ -1,0 +1,34 @@
+# What tools/preview.py and the picture on the Plugins page show (docs/PREVIEW.md). The bench builds with plugin.yaml's
+# defaults, one made-up entity per sensor. Each state is also under the attribute "": the bench answers the screen's
+# question for a plain state (which ESPHome sends with an empty attribute) from there.
+tiles:
+  - { tile: flux, name: Flux, sizes: [3x2, 3x1, 2x1, 1x1] }
+
+cards:
+  - { card: details }
+
+states:
+  sensor.flux_grid_not_chosen:
+    state: "-1000"
+    attributes: { "": "-1000", unit_of_measurement: W }
+  sensor.flux_pv_not_chosen:
+    state: "2400"
+    attributes: { "": "2400", unit_of_measurement: W }
+  sensor.flux_pv_today_not_chosen:
+    state: "8.2"
+    attributes: { "": "8.2", unit_of_measurement: kWh }
+  sensor.flux_coverage_not_chosen:
+    state: "60"
+    attributes: { "": "60", unit_of_measurement: "%" }
+  sensor.flux_forecast_not_chosen:
+    state: "11.2"
+    attributes: { "": "11.2", unit_of_measurement: kWh }
+  sensor.flux_grid_today_not_chosen:
+    state: "3.1"
+    attributes: { "": "3.1", unit_of_measurement: kWh }
+  sensor.flux_bat_rate_not_chosen:
+    state: "1500"
+    attributes: { "": "1500", unit_of_measurement: W }
+  sensor.flux_soc_not_chosen:
+    state: "82"
+    attributes: { "": "82", unit_of_measurement: "%" }
