@@ -1,0 +1,46 @@
+# What a screen gets when it takes this plugin. Tessera includes this file from the screen's <name>.plugins.yaml with
+# the entities chosen in the plugin's details filled in, and adds the components folder beside it. An entity that was
+# not chosen keeps the default, which no entity has, and stays empty.
+defaults:
+  GRID: sensor.flux_grid_not_chosen
+  PV: sensor.flux_pv_not_chosen
+  PV_TODAY: sensor.flux_pv_today_not_chosen
+  COVERAGE: sensor.flux_coverage_not_chosen
+  FORECAST: sensor.flux_forecast_not_chosen
+  GRID_TODAY: sensor.flux_grid_today_not_chosen
+  BAT_RATE: sensor.flux_bat_rate_not_chosen
+  BAT_RATE_UNIT: sensor.flux_bat_rate_unit_not_chosen
+  SOC: sensor.flux_soc_not_chosen
+
+# Each sensor's state and its unit (W or kW, Wh or kWh), read straight from Home Assistant.
+text_sensor:
+  - { platform: homeassistant, id: flux_grid, entity_id: "${GRID}", internal: true }
+  - { platform: homeassistant, id: flux_grid_unit, entity_id: "${GRID}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_pv, entity_id: "${PV}", internal: true }
+  - { platform: homeassistant, id: flux_pv_unit, entity_id: "${PV}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_pv_today, entity_id: "${PV_TODAY}", internal: true }
+  - { platform: homeassistant, id: flux_pv_today_unit, entity_id: "${PV_TODAY}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_coverage, entity_id: "${COVERAGE}", internal: true }
+  - { platform: homeassistant, id: flux_forecast, entity_id: "${FORECAST}", internal: true }
+  - { platform: homeassistant, id: flux_forecast_unit, entity_id: "${FORECAST}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_grid_today, entity_id: "${GRID_TODAY}", internal: true }
+  - { platform: homeassistant, id: flux_grid_today_unit, entity_id: "${GRID_TODAY}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_bat_rate, entity_id: "${BAT_RATE}", internal: true }
+  - { platform: homeassistant, id: flux_bat_rate_unit, entity_id: "${BAT_RATE}", attribute: unit_of_measurement, internal: true }
+  - { platform: homeassistant, id: flux_soc, entity_id: "${SOC}", internal: true }
+
+flux:
+  grid: flux_grid
+  grid_unit: flux_grid_unit
+  pv: flux_pv
+  pv_unit: flux_pv_unit
+  pv_today: flux_pv_today
+  pv_today_unit: flux_pv_today_unit
+  coverage: flux_coverage
+  forecast: flux_forecast
+  forecast_unit: flux_forecast_unit
+  grid_today: flux_grid_today
+  grid_today_unit: flux_grid_today_unit
+  bat_rate: flux_bat_rate
+  bat_rate_unit: flux_bat_rate_unit
+  soc: flux_soc
