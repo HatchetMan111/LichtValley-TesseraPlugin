@@ -185,11 +185,10 @@ class FlowView {
         dia_ = std::min(dia_, height_);
         big_icon_ = dia_ >= ui::line_height(Font::ICON) + ui::px(10);
         main_h_ = std::max(dia_, text_h);
-
-        // Side by side when four circles and their values fit, with the arrows between them. The battery takes a
-        // narrower value ("82 %" instead of "8,88 kW"), so the four fit a little tighter than the three.
-        const int need = dia_ + ui::px(8) + ui::text_width("8,88 kW", value_font_);
-        wide_ = 4 * need + 3 * (arrow_w_ + ui::px(8)) <= width_;
+        // The four circles stand in a row with their values and labels under them: they fit when the circles and
+        // the arrows between them span the width.
+        row_h_ = dia_ + value_h_ + label_h_ + ui::px(6);
+        wide_ = 4 * dia_ + 3 * (arrow_w_ + ui::px(8)) + ui::px(16) <= width_;
 
         for (Block &b : blocks_) {
             b.circle = ui::block(parent, theme::TRACK);
@@ -245,7 +244,7 @@ class FlowView {
         const bool want_share = !std::isnan(r.coverage) && r.home > FLOWING;
         const bool want_day = today_ && !day.empty();
         const bool want_fc = today_ && !std::isnan(r.forecast) && r.forecast > 0 && !std::isnan(r.pv_today);
-        int parts = 0, used = wide_ ? main_h_ : compact_main_h(has_pv);
+        int parts = 0, used = wide_ ? row_h_ : compact_main_h(has_pv);
         auto take = [&](bool want, int h, int bit) {
             if (want && used + gap_ + h <= height_) {
                 used += gap_ + h;
@@ -302,24 +301,36 @@ class FlowView {
         };
         const int nodes = has_bat ? 4 : 3;
         if (wide_) {
-            // Four columns (three without a battery): solar at the left edge, battery and house in between, the grid
-            // at the right edge; the arrows in the gaps between them.
-            const int col = (width_ - (nodes - 1) * (arrow_w_ + ui::px(8))) / nodes;
-            const int step = col + arrow_w_ + ui::px(8);
-            // Without a battery the three keep their positions among the four: solar, home, grid.
+            // Four columns (three without a battery): each circle centred in its column, its value and label under
+            // it; the arrows between the circles, at their mid-height.
+            const int col = width_ / nodes;
+            const int ih = ui::line_height(big_icon_ ? Font::ICON : Font::ICON_SMALL);
             int slot = 0;
             for (int i : has_bat ? std::vector<int>{SUN, BATTERY, HOME, GRID} : std::vector<int>{SUN, HOME, GRID}) {
-                put_block(blocks_[i], slot * step, col);
+                Block &b = blocks_[i];
+                const int cx = slot * col + col / 2;
+                place(b.circle, cx - dia_ / 2, y, dia_, dia_);
+                inside(b.circle, b.icon, dia_, ih);
+                place(b.value, slot * col + ui::px(4), y + dia_ + ui::px(4), col - ui::px(8), value_h_);
+                place(b.label, slot * col, y + dia_ + ui::px(4) + value_h_, col, label_h_);
+                lv_obj_set_style_text_align(b.value, LV_TEXT_ALIGN_CENTER, 0);
+                lv_obj_set_style_text_align(b.label, LV_TEXT_ALIGN_CENTER, 0);
                 ++slot;
             }
             const int ah = ui::line_height(Font::ICON_SMALL);
             for (int i = 0; i < nodes - 1; ++i)
-                place(arrows_[i], (i + 1) * step - arrow_w_ - ui::px(4), y + (main_h_ - ah) / 2, arrow_w_, ah);
+                place(arrows_[i], (i + 1) * col - arrow_w_ / 2, y + dia_ / 2 - ah / 2, arrow_w_, ah);
             for (int i = nodes - 1; i < 3; ++i) show(arrows_[i], false);
-            y += main_h_;
+            y += row_h_;
         } else {
+            lv_obj_set_style_text_align(blocks_[GRID].value, LV_TEXT_ALIGN_LEFT, 0);
+            lv_obj_set_style_text_align(blocks_[GRID].label, LV_TEXT_ALIGN_LEFT, 0);
             // The grid's block over the whole width, the sun's and the battery's lines under it; no house, no arrows.
             put_block(blocks_[GRID], 0, width_);
+            lv_obj_set_style_text_align(blocks_[GRID].value, LV_TEXT_ALIGN_LEFT, 0);
+            lv_obj_set_style_text_align(blocks_[GRID].label, LV_TEXT_ALIGN_LEFT, 0);
+            lv_obj_set_style_text_align(blocks_[SUN].label, LV_TEXT_ALIGN_LEFT, 0);
+            lv_obj_set_style_text_align(blocks_[BATTERY].label, LV_TEXT_ALIGN_LEFT, 0);
             hide_block(blocks_[SUN]);
             hide_block(blocks_[HOME]);
             hide_block(blocks_[BATTERY]);
@@ -404,7 +415,7 @@ class FlowView {
                 show_block(b);
                 paint_circle(b, ICON_BATTERY, bat_role, charging || discharging);
                 ui::set_text(b.label, !std::isnan(r.soc)
-                                          ? tessera::fill(plugin_->text("battery_soc"), "n", std::to_string(percent(r.soc)))
+                                          ? std::string(plugin_->text("battery")) + " " + std::to_string(percent(r.soc)) + " %"
                                           : std::string(plugin_->text("battery")));
                 ui::set_color(b.label, theme::MUTED);
                 ui::set_text(b.value, plugin_->power_text(r.bat));
@@ -506,7 +517,7 @@ class FlowView {
 
     const Flux *plugin_;
     int width_ = 0, height_ = 0, label_h_ = 0, value_h_ = 0, body_h_ = 0, gap_ = 0, bar_h_ = 0, arrow_w_ = 0;
-    int dia_ = 0, main_h_ = 0, share_y_ = 0, fc_y_ = 0, shown_ = -1;
+    int dia_ = 0, main_h_ = 0, row_h_ = 0, share_y_ = 0, fc_y_ = 0, shown_ = -1;
     Font value_font_ = Font::TITLE;
     bool today_ = true, wide_ = true, big_icon_ = false;
     Block blocks_[4];
