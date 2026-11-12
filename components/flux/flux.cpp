@@ -8,24 +8,27 @@ namespace esphome::flux {
 
 static const char *const TAG = "flux";
 
+using tessera::Font;
+using tessera::Tone;
 namespace ui = tessera::ui;
 
 // ---- Readable colours ---------------------------------------------------------------------------------------------
 // A colour's luminance and the WCAG contrast of two: amber or yellow words on the light look's white card fall under
 // what a person reads, so there they take the ink instead; on the dark look they keep their colour.
 static float luminance(lv_color_t c) {
-    const float s = v / 255.0f;
-    return 0.2126f * linear(r) + 0.7152f * linear(g) + 0.0722f * linear(b);
+    auto channel = [](uint8_t v) {
+        const float s = v / 255.0f;
+        return s <= 0.03928f ? s / 12.92f : std::pow((s + 0.055f) / 1.055f, 2.4f);
+    };
+    return 0.2126f * channel(c.red) + 0.7152f * channel(c.green) + 0.0722f * channel(c.blue);
 }
 static bool reads_on_card(lv_color_t c) {
     const float a = luminance(c), b = luminance(ui::color(theme::CARD));
-    const float hi = std::max(a, b), lo = std::min(a, b);
-    return (hi + 0.05f) / (lo + 0.05f) >= 2.6f;
+    return (std::max(a, b) + 0.05f) / (std::min(a, b) + 0.05f) >= 3.0f;
 }
 // A label (words or an icon) in a tone's or a role's colour where that reads on the card, else in the ink.
 static void set_readable(lv_obj_t *label, tessera::Tone tone, theme::Role role) {
-    lv_color_t c = tone == tessera::Tone::NORMAL ? ui::color(role) : ui::tone(tone);
-    if (ui::dark() || reads_on_card(c)) ui::set_color(label, c);
+    if (reads_on_card(ui::tone_color(tone, role))) ui::set_tone(label, tone, role);
     else ui::set_color(label, theme::INK);
 }
 static constexpr uint32_t ICON_SOLAR = 0xF0A72;   // solar-power
@@ -38,7 +41,9 @@ static constexpr float FLOWING = 5.0f;            // watts below which nothing c
 
 // The colours of the four: the sun amber, the grid blue while it gives and green while it takes, the battery green
 // while it charges and amber while it gives.
-static const theme::Role SOLAR = theme::MARK_AMBER;
+static constexpr theme::Role SOLAR = theme::MARK_AMBER;
+static constexpr theme::Role IMPORT = theme::MARK_BLUE;
+static constexpr theme::Role EXPORT = theme::MARK_GREEN;
 
 // A label inside a circle: a child of it, so the two are one part, centred in it.
 static void inside(lv_obj_t *circle, lv_obj_t *label, int w, int h, int dy = 0) {
@@ -399,7 +404,7 @@ class FlowView {
                 show_block(b);
                 paint_circle(b, ICON_BATTERY, bat_role, charging || discharging);
                 ui::set_text(b.label, !std::isnan(r.soc)
-                                          ? tessera::fill(plugin_->text("battery_soc"), "n", percent(r.soc))
+                                          ? tessera::fill(plugin_->text("battery_soc"), "n", std::to_string(percent(r.soc)))
                                           : std::string(plugin_->text("battery")));
                 ui::set_color(b.label, theme::MUTED);
                 ui::set_text(b.value, plugin_->power_text(r.bat));
@@ -784,7 +789,7 @@ class DetailsCard : public tessera::Card {
             if (!std::isnan(r.pv)) items[n++] = {ICON_SOLAR, SOLAR, plugin_->text("row_pv"), plugin_->power_text(r.pv)};
             if (r.have_bat) {
                 const std::string soc = !std::isnan(r.soc)
-                                            ? tessera::fill(plugin_->text("battery_soc"), "n", percent(r.soc))
+                                            ? tessera::fill(plugin_->text("battery_soc"), "n", std::to_string(percent(r.soc)))
                                             : std::string();
                 items[n++] = {ICON_BATTERY, r.bat < -FLOWING ? theme::MARK_GREEN : SOLAR, plugin_->text("row_battery"),
                               plugin_->power_text(r.bat) + (soc.empty() ? "" : " · " + soc)};
