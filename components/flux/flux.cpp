@@ -180,15 +180,21 @@ class FlowView {
         bar_h_ = ui::px(large ? 10 : 6);
         arrow_w_ = ui::line_height(Font::ICON_SMALL);
 
+        // The four circles stand in a row, their values and labels under them. Each column is a fourth of the tile:
+        // the circle, its value and its label never grow past it, so nothing overlaps or wraps.
+        const int col4 = width_ / 4;
+        dia_ = std::min({ui::mm(large ? 16 : 12), col4 - ui::px(6), height_ / 2});
+        dia_ = std::max(dia_, ui::line_height(Font::ICON_SMALL) + ui::px(8));
+        wide_ = 4 * dia_ + 3 * (arrow_w_ + ui::px(6)) + ui::px(8) <= width_;
+        while (value_font_ > Font::BODY &&
+               ui::text_width("8,88 kW", value_font_) > col4 - ui::px(6)) {
+            value_font_ = static_cast<Font>(static_cast<uint8_t>(value_font_) + 1);
+        }
+        value_h_ = ui::line_height(value_font_);
         const int text_h = label_h_ + value_h_;
-        dia_ = std::min(ui::mm(large ? 16 : 12), std::max(ui::line_height(Font::ICON_SMALL) + ui::px(8), text_h));
-        dia_ = std::min(dia_, height_);
         big_icon_ = dia_ >= ui::line_height(Font::ICON) + ui::px(10);
         main_h_ = std::max(dia_, text_h);
-        // The four circles stand in a row with their values and labels under them: they fit when the circles and
-        // the arrows between them span the width.
-        row_h_ = dia_ + value_h_ + label_h_ + ui::px(6);
-        wide_ = 4 * dia_ + 3 * (arrow_w_ + ui::px(8)) + ui::px(16) <= width_;
+        row_h_ = dia_ + ui::px(4) + value_h_ + label_h_;
 
         for (Block &b : blocks_) {
             b.circle = ui::block(parent, theme::TRACK);
@@ -302,7 +308,7 @@ class FlowView {
         const int nodes = has_bat ? 4 : 3;
         if (wide_) {
             // Four columns (three without a battery): each circle centred in its column, its value and label under
-            // it; the arrows between the circles, at their mid-height.
+            // it; the arrows in the gaps between the circles, at their mid-height.
             const int col = width_ / nodes;
             const int ih = ui::line_height(big_icon_ ? Font::ICON : Font::ICON_SMALL);
             int slot = 0;
@@ -311,7 +317,7 @@ class FlowView {
                 const int cx = slot * col + col / 2;
                 place(b.circle, cx - dia_ / 2, y, dia_, dia_);
                 inside(b.circle, b.icon, dia_, ih);
-                place(b.value, slot * col + ui::px(4), y + dia_ + ui::px(4), col - ui::px(8), value_h_);
+                place(b.value, slot * col + ui::px(2), y + dia_ + ui::px(4), col - ui::px(4), value_h_);
                 place(b.label, slot * col, y + dia_ + ui::px(4) + value_h_, col, label_h_);
                 lv_obj_set_style_text_align(b.value, LV_TEXT_ALIGN_CENTER, 0);
                 lv_obj_set_style_text_align(b.label, LV_TEXT_ALIGN_CENTER, 0);
@@ -389,7 +395,7 @@ class FlowView {
         Block &g = blocks_[GRID];
         show_block(g);
         paint_circle(g, ICON_GRID, grid_role, importing || exporting);
-        ui::set_text(g.label, plugin_->text(exporting ? "export" : "import"));
+        ui::set_text(g.label, plugin_->text(wide_ ? "grid" : (exporting ? "export" : "import")));
         ui::set_color(g.label, theme::MUTED);
         ui::set_text(g.value, plugin_->power_text(r.grid));
         ui::set_color(g.value, theme::INK);
@@ -415,7 +421,7 @@ class FlowView {
                 show_block(b);
                 paint_circle(b, ICON_BATTERY, bat_role, charging || discharging);
                 ui::set_text(b.label, !std::isnan(r.soc)
-                                          ? std::string(plugin_->text("battery")) + " " + std::to_string(percent(r.soc)) + " %"
+                                          ? std::to_string(percent(r.soc)) + " %"
                                           : std::string(plugin_->text("battery")));
                 ui::set_color(b.label, theme::MUTED);
                 ui::set_text(b.value, plugin_->power_text(r.bat));
