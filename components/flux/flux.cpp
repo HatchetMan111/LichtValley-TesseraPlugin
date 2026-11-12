@@ -677,12 +677,10 @@ class DetailsCard : public tessera::Card {
         upper_y_ = grid.cy - r / 4;
         lower_y_ = grid.cy + r / 4;
         const int sun_bottom = sun.cy + r - ring_w_;
-        place(lines_[SUN_DOWN_B], bat.cx + r - ring_w_, upper_y_, sun.cx - off - (bat.cx + r - ring_w_) + lw, lw);
-        place(lines_[SUN_TO_B], bat.cx + r - ring_w_, upper_y_, lw, lw);
         place(lines_[SUN_DOWN_B], sun.cx - off, sun_bottom, lw, upper_y_ - sun_bottom + lw);
         place(lines_[SUN_TO_B], bat.cx + r - ring_w_, upper_y_, sun.cx - off - (bat.cx + r - ring_w_) + lw, lw);
         place(lines_[SUN_DOWN_G], sun.cx + off, sun_bottom, lw, upper_y_ - sun_bottom + lw);
-        place(lines_[SUN_TO_G], grid.cx + r - ring_w_, upper_y_, sun.cx + off - (grid.cx + r - ring_w_) + lw, lw);
+        place(lines_[SUN_TO_G], sun.cx + off, upper_y_, grid.cx + r - ring_w_ - sun.cx - off + lw, lw);
         place(lines_[SUN_DOWN_H], sun.cx, sun_bottom, lw, upper_y_ - sun_bottom + lw);
         place(lines_[SUN_TO_H], sun.cx, upper_y_, home.cx - r + ring_w_ - sun.cx + lw, lw);
         place(lines_[BAT_HOME], bat.cx + r - ring_w_, lower_y_, home.cx - bat.cx - 2 * (r - ring_w_), lw);
