@@ -52,6 +52,9 @@
     "battery": "Battery",
     "bat_invert": "Invert the battery",
     "input_bat_rate": "Battery power",
-    "input_soc": "State of charge"
+    "input_soc": "State of charge",
+    "bat_invert_hint": "For battery sensors that count charging as positive.",
+    "input_bat_rate_hint": "The battery's power in W: positive discharge, negative charge. May stay empty.",
+    "input_soc_hint": "The battery's state of charge in %. May stay empty."
   }
 }
