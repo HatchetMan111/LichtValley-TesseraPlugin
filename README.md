@@ -61,9 +61,9 @@ Then in Tessera: **Plugins → Mit Link hinzufügen →** `https://github.com/Ha
 
 | Input | Sensor |
 |---|---|
-| Netz-Leistung | `sensor.netzleistungnetto_wert_fur_nulleinspeisung` (Tibber, +Bezug/−Einspeisung) |
-| PV-Leistung | `sensor.gesamt_hof_stromproduktion` |
-| PV heute | `sensor.gesamttages_stromproduktion` |
+| Netz-Leistung | `sensor.hausverbrauch_nettolive` (+Bezug/−Einspeisung) |
+| PV-Leistung | `sensor.symo_8_2_3_m_1_leistung_ac` (Symo 8.2 AC-Leistung) |
+| PV heute | `sensor.symo_8_2_3_m_1_energie_tag` |
 | Prognose heute | `sensor.solcast_pv_forecast_prognose_heute` |
 | Netzbezug heute | `sensor.gesamttagesstromverbrauchsensor_stromverbrauch_eingekauft` |
 | Batterieleistung | `sensor.marstek_venus_modbus_batterieleistung` |
