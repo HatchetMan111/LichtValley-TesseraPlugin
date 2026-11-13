@@ -34,7 +34,7 @@ static void set_readable(lv_obj_t *label, tessera::Tone tone, theme::Role role) 
 static constexpr uint32_t ICON_SOLAR = 0xF0A72;   // solar-power
 static constexpr uint32_t ICON_HOME = 0xF02DC;    // home
 static constexpr uint32_t ICON_GRID = 0xF0D3E;    // transmission-tower
-static constexpr uint32_t ICON_BATTERY = 0xF0079; // battery
+static constexpr uint32_t ICON_BATTERY = 0xF1901; // home-battery (natives Tessera-Glyph)
 static constexpr uint32_t ICON_RIGHT = 0xF0054;   // arrow-right
 static constexpr uint32_t ICON_LEFT = 0xF004D;    // arrow-left
 static constexpr float FLOWING = 5.0f;            // watts below which nothing counts as flowing
