@@ -79,19 +79,11 @@ The screen can show pictures straight from Home Assistant — no plugin needed. 
 
 1. Copy the picture into Home Assistant's config folder, e.g. `/config/images/home.png` (via the Samba share, or
    drag & drop in the Studio Code Server's explorer — uploads land on disk at once).
-2. Add a local-file camera to `configuration.yaml`:
-
-   ```yaml
-   camera:
-     - platform: local_file
-       name: Home 3D
-       file_path: /config/images/home.png
-   ```
-
-   If a `camera:` block already exists, only add the indented lines under it.
-3. **Restart Home Assistant.** YAML-configured cameras load only at startup — a YAML reload from Developer tools is
-   not enough.
-4. In Tessera's layout, add a tile for `camera.home_3d`. At **full page** it fills the whole glass; it also works as
-   the screensaver's **Camera** step (Screen settings → Screensaver), so the picture fills the screen in standby.
+2. Add the camera in the Home Assistant **UI**: Settings → Devices & Services → Add Integration → search for
+   **„Local File"** → enter the path `/config/images/home.png`. (Since HA 2026.11 the YAML `camera:` block for
+   local files no longer works — the integration is UI-only and needs no restart.)
+3. The camera appears as `camera.local_file`. In Tessera's layout, add a tile for it. At **full page** it fills the
+   whole glass; it also works as the screensaver's **Camera** step (Screen settings → Screensaver), so the picture
+   fills the screen in standby.
 
 The picture stays completely local: it is read from your Home Assistant over your network and never leaves it.
