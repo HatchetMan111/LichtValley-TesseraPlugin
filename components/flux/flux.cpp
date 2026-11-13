@@ -47,6 +47,9 @@ static constexpr theme::Role EXPORT = theme::MARK_GREEN;
 
 // A label inside a circle: a child of it, so the two are one part, centred in it.
 static void inside(lv_obj_t *circle, lv_obj_t *label, int w, int h, int dy = 0) {
+    // Fresh coords: the callers place the circle and position their children before the first render, and
+    // lv_obj_get_width would return the stale pre-layout size and push every child out of the circle.
+    lv_obj_update_layout(circle);
     lv_obj_set_parent(label, circle);
     const int cw = lv_obj_get_width(circle), ch = lv_obj_get_height(circle);
     lv_obj_set_pos(label, (cw - w) / 2, (ch - h) / 2 + dy);
@@ -594,7 +597,7 @@ class DetailsCard : public tessera::Card {
         value_h_ = ui::line_height(Font::BODY_LARGE);
 
         // The diagram takes the left part, as wide as its height allows; the list the rest.
-        const int gap = ui::px(large ? 32 : 16);
+        const int gap = ui::px(large ? 12 : 8);
         diagram_w_ = std::min(width_ * 11 / 20, height_ * 3 / 2);
         list_x_ = diagram_w_ + gap;
         list_w_ = width_ - list_x_;
@@ -626,7 +629,7 @@ class DetailsCard : public tessera::Card {
             r.icon = ui::label(c.parent, Font::ICON_SMALL, theme::MUTED);
             lv_obj_set_style_text_align(r.icon, LV_TEXT_ALIGN_CENTER, 0);
             r.name = ui::label(c.parent, Font::BODY_LARGE, theme::INK_SOFT);
-            r.value = ui::label(c.parent, Font::TITLE, theme::INK);
+            r.value = ui::label(c.parent, Font::BODY_LARGE, theme::INK);
             lv_obj_set_style_text_align(r.value, LV_TEXT_ALIGN_RIGHT, 0);
             r.rule = ui::block(c.parent, theme::TRACK);
         }
@@ -770,7 +773,7 @@ class DetailsCard : public tessera::Card {
         paint_node(nodes_[HOME], ICON_HOME, theme::ACCENT, r.home > FLOWING, plugin_->power_text(r.home),
                    std::isnan(r.coverage) ? std::string() : tessera::format(plugin_->text("percent"), percent(r.coverage)),
                    plugin_->text("home"));
-        paint_line(SUN_DOWN_B, SUN_TO_B, DOT_SUN_B, SOLAR, has_pv && charging);
+        paint_line(SUN_DOWN_B, SUN_TO_B, DOT_SUN_B, SOLAR, has_pv && charging && pv > FLOWING);
         paint_line(SUN_DOWN_G, SUN_TO_G, DOT_SUN_G, EXPORT, has_pv && exporting);
         paint_line(SUN_DOWN_H, SUN_TO_H, DOT_SUN_H, SOLAR, sun_home > FLOWING);
         paint_line(BAT_HOME, -1, DOT_BAT_HOME, bat_role, charging || discharging);
@@ -802,33 +805,27 @@ class DetailsCard : public tessera::Card {
         int n = 0;
         if (r.have_grid) {
             const bool exporting = r.grid < -FLOWING;
-            items[n++] = {ICON_GRID, exporting ? EXPORT : IMPORT, plugin_->text(exporting ? "export" : "import"),
+            items[n++] = {ICON_GRID, exporting ? EXPORT : IMPORT, plugin_->text(exporting ? "row_export" : "row_import"),
                           plugin_->power_text(r.grid)};
             if (!std::isnan(r.pv)) items[n++] = {ICON_SOLAR, SOLAR, plugin_->text("row_pv"), plugin_->power_text(r.pv)};
-            if (r.have_bat) {
-                const std::string soc = !std::isnan(r.soc)
-                                            ? tessera::fill(plugin_->text("battery_soc"), "n", std::to_string(percent(r.soc)))
-                                            : std::string();
+            // The battery's SoC and the forecast's share show in the diagram and on the tile; the rows keep the
+            // value alone, or the name would end in dots.
+            if (r.have_bat)
                 items[n++] = {ICON_BATTERY, r.bat < -FLOWING ? theme::MARK_GREEN : SOLAR, plugin_->text("row_battery"),
-                              plugin_->power_text(r.bat) + (soc.empty() ? "" : " · " + soc)};
-            }
+                              plugin_->power_text(r.bat)};
             items[n++] = {ICON_HOME, theme::ACCENT, plugin_->text("row_home"), plugin_->power_text(r.home)};
             if (!std::isnan(r.coverage))
                 items[n++] = {ICON_LEAF, theme::MARK_GREEN, plugin_->text("row_coverage"),
                               tessera::format(plugin_->text("percent"), percent(r.coverage))};
             if (!std::isnan(r.pv_today))
                 items[n++] = {ICON_PANEL, SOLAR, plugin_->text("row_pv_today"), plugin_->energy_text(r.pv_today)};
-            if (!std::isnan(r.forecast)) {
-                std::string v = plugin_->energy_text(r.forecast);
-                if (!std::isnan(r.pv_today) && r.forecast > 0)
-                    v += " · " + tessera::format(plugin_->text("percent"), percent(100.0f * r.pv_today / r.forecast));
-                items[n++] = {ICON_SUNNY, SOLAR, plugin_->text("row_forecast"), v};
-            }
+            if (!std::isnan(r.forecast))
+                items[n++] = {ICON_SUNNY, SOLAR, plugin_->text("row_forecast"), plugin_->energy_text(r.forecast)};
             if (!std::isnan(r.grid_today))
                 items[n++] = {ICON_METER, IMPORT, plugin_->text("row_grid_today"), plugin_->energy_text(r.grid_today)};
         }
         // The rows share the height, at most a comfortable row each, in the middle.
-        const int ih = ui::line_height(Font::ICON_SMALL), th = ui::line_height(Font::TITLE);
+        const int ih = ui::line_height(Font::ICON_SMALL), th = ui::line_height(Font::BODY_LARGE);
         // On a narrow list the names in the smaller font; each value as wide as it is, the name taking the rest.
         const Font name_font = list_w_ >= ui::mm(70) ? Font::BODY_LARGE : Font::BODY;
         const int name_h = ui::line_height(name_font);
@@ -853,7 +850,7 @@ class DetailsCard : public tessera::Card {
             if (on) {
                 const int y = top + i * row_h;
                 const int name_x = list_x_ + ih + ui::px(10);
-                const int value_w = std::min(list_w_ * 3 / 5, ui::text_width(items[i].value.c_str(), Font::TITLE) + ui::px(4));
+                const int value_w = std::min(list_w_ * 3 / 5, ui::text_width(items[i].value.c_str(), Font::BODY_LARGE) + ui::px(4));
                 place(row.name, name_x, y + (row_h - name_h) / 2, list_x_ + list_w_ - value_w - ui::px(8) - name_x, name_h);
                 place(row.value, list_x_ + list_w_ - value_w, y + (row_h - th) / 2, value_w, th);
             }
