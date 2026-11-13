@@ -183,7 +183,8 @@ class FlowView {
         // The four circles stand in a row, their values and labels under them. Each column is a fourth of the tile:
         // the circle, its value and its label never grow past it, so nothing overlaps or wraps.
         const int col4 = width_ / 4;
-        dia_ = std::min({ui::mm(large ? 16 : 12), col4 - ui::px(6), height_ / 2});
+        dia_ = std::min({ui::mm(large ? 16 : 12), col4 - ui::px(6), height_ / 2,
+                         (width_ - ui::px(8) - 3 * (arrow_w_ + ui::px(6))) / 4});
         dia_ = std::max(dia_, ui::line_height(Font::ICON_SMALL) + ui::px(8));
         wide_ = 4 * dia_ + 3 * (arrow_w_ + ui::px(6)) + ui::px(8) <= width_;
         while (value_font_ > Font::BODY &&
