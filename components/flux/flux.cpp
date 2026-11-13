@@ -304,7 +304,7 @@ class FlowView {
         const int ih = ui::line_height(big_icon_ ? Font::ICON : Font::ICON_SMALL);
         auto put_block = [&](Block &b, int x, int w) {
             place(b.circle, x, y + (main_h_ - dia_) / 2, dia_, dia_);
-            inside(b.circle, b.icon, dia_, ih);
+            inside(b.circle, b.icon, dia_, ih, (dia_ - ih) / 2);
             const int tx = x + dia_ + ui::px(8), tw = std::max(1, w - dia_ - ui::px(8));
             place(b.label, tx, y + (main_h_ - text_h) / 2, tw, label_h_);
             place(b.value, tx, y + (main_h_ - text_h) / 2 + label_h_, tw, value_h_);
@@ -320,7 +320,7 @@ class FlowView {
                 Block &b = blocks_[i];
                 const int cx = slot * col + col / 2;
                 place(b.circle, cx - dia_ / 2, y, dia_, dia_);
-                inside(b.circle, b.icon, dia_, ih);
+                inside(b.circle, b.icon, dia_, ih, (dia_ - ih) / 2);
                 place(b.value, slot * col + ui::px(2), y + dia_ + ui::px(4), col - ui::px(4), value_h_);
                 place(b.label, slot * col, y + dia_ + ui::px(4) + value_h_, col, label_h_);
                 lv_obj_set_style_text_align(b.value, LV_TEXT_ALIGN_CENTER, 0);
@@ -425,7 +425,7 @@ class FlowView {
                 show_block(b);
                 paint_circle(b, ICON_BATTERY, bat_role, charging || discharging);
                 ui::set_text(b.label, !std::isnan(r.soc)
-                                          ? std::to_string(percent(r.soc)) + " %"
+                                          ? std::string(plugin_->text("battery")) + " " + std::to_string(percent(r.soc)) + " %"
                                           : std::string(plugin_->text("battery")));
                 ui::set_color(b.label, theme::MUTED);
                 ui::set_text(b.value, plugin_->power_text(r.bat));
@@ -691,8 +691,9 @@ class DetailsCard : public tessera::Card {
             show(n.extra, show_extra_);
             // The sun's name above it, the others' below.
             const int ny = i == SUN ? n.cy - r - label_h_ - ui::px(4) : n.cy + r + ui::px(4);
-            // The name a little wider than its circle, but inside the card at the edges.
-            const int name_w = dia_ + ui::px(40);
+            // The name a little wider than its circle, but inside the card at the edges; a circle near an edge keeps
+            // its name centred over itself.
+            const int name_w = std::min(dia_ + ui::px(40), std::max(dia_, 2 * std::min(n.cx, width_ - n.cx)));
             place(n.name, std::max(0, std::min(n.cx - name_w / 2, width_ - name_w)), std::max(0, ny), name_w, label_h_);
         }
         // Lines as in Home Assistant's card: from the bottom of the sun one bends to the battery, one to the grid and
@@ -712,9 +713,11 @@ class DetailsCard : public tessera::Card {
         place(lines_[BAT_HOME], bat.cx + r - ring_w_, lower_y_, home.cx - bat.cx - 2 * (r - ring_w_), lw);
         place(lines_[GRID_HOME], grid.cx + r - ring_w_, lower_y_, home.cx - grid.cx - 2 * (r - ring_w_), lw);
         const int d = dot_;
-        place(dots_[DOT_SUN_B], (bat.cx + r + sun.cx - off) / 2 - d / 2, upper_y_ + lw / 2 - d / 2, d, d);
-        place(dots_[DOT_SUN_G], (sun.cx + off + grid.cx - r) / 2 - d / 2, upper_y_ + lw / 2 - d / 2, d, d);
-        place(dots_[DOT_SUN_H], (sun.cx + home.cx - r) / 2 - d / 2, upper_y_ + lw / 2 - d / 2, d, d);
+        // The dots sit where their lines are visible: the circles lie over the lines, so the sun's dots go in the
+        // gaps between the circles, and the sun-to-house dot on the drop above the house's circle.
+        place(dots_[DOT_SUN_B], (bat.cx + r + home.cx - r) / 2 - d / 2, upper_y_ + lw / 2 - d / 2, d, d);
+        place(dots_[DOT_SUN_G], (home.cx + r + grid.cx - r) / 2 - d / 2, upper_y_ + lw / 2 - d / 2, d, d);
+        place(dots_[DOT_SUN_H], sun.cx + lw / 2 - d / 2, (sun.cy + r - ring_w_ + home.cy - r) / 2 - d / 2, d, d);
         place(dots_[DOT_BAT_HOME], (bat.cx + r + home.cx - r) / 2 - d / 2, lower_y_ + lw / 2 - d / 2, d, d);
         place(dots_[DOT_GRID_HOME], (grid.cx + r + home.cx - r) / 2 - d / 2, lower_y_ + lw / 2 - d / 2, d, d);
     }
@@ -778,8 +781,10 @@ class DetailsCard : public tessera::Card {
         paint_line(SUN_DOWN_H, SUN_TO_H, DOT_SUN_H, SOLAR, sun_home > FLOWING);
         paint_line(BAT_HOME, -1, DOT_BAT_HOME, bat_role, charging || discharging);
         paint_line(GRID_HOME, -1, DOT_GRID_HOME, IMPORT, importing);
-        // Without a solar sensor, no lines from the sun.
-        for (int i : {SUN_DOWN_B, SUN_TO_B, SUN_DOWN_G, SUN_TO_G, SUN_DOWN_H, SUN_TO_H}) show(lines_[i], has_pv);
+        // Without a solar sensor, no lines from the sun. The sun sits directly over the house, so the horizontal
+        // piece of that line has no width and never shows — the drop covers the whole path.
+        for (int i : {SUN_DOWN_B, SUN_TO_B, SUN_DOWN_G, SUN_TO_G, SUN_DOWN_H}) show(lines_[i], has_pv);
+        show(lines_[SUN_TO_H], false);
         show(nodes_[SUN].ring, has_pv);
         if (!has_pv) ui::set_text(nodes_[SUN].icon, ""), ui::set_text(nodes_[SUN].value, ""),
             ui::set_text(nodes_[SUN].extra, ""), ui::set_text(nodes_[SUN].name, "");
