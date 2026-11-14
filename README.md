@@ -61,8 +61,8 @@ Then in Tessera: **Plugins → Mit Link hinzufügen →** `https://github.com/Ha
 
 | Input | Sensor |
 |---|---|
-| Netz-Leistung | `sensor.hausverbrauch_nettolive` (+Bezug/−Einspeisung) |
-| PV-Leistung | `sensor.symo_8_2_3_m_1_leistung_ac` (Symo 8.2 AC-Leistung) |
+| Netz-Leistung | `sensor.netzleistungnetto_wert_fur_nulleinspeisung` (Tibber-Zähler, zählt invertiert → **Netz umkehren** AN) |
+| PV-Leistung | `sensor.symo_8_2_3_m_1_leistung_ac` (kleine PV = Haus-PV; die Symo 20 speist über einen eigenen Einspeisezähler direkt ins Netz) |
 | PV heute | `sensor.symo_8_2_3_m_1_energie_tag` |
 | Prognose heute | `sensor.solcast_pv_forecast_prognose_heute` |
 | Netzbezug heute | `sensor.gesamttagesstromverbrauchsensor_stromverbrauch_eingekauft` |
